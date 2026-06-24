@@ -212,6 +212,14 @@ export const swaggerSpec = {
     '/check-in': { get: { tags: ['Check-In'], summary: 'List check-ins', responses: { 200: { description: 'Success' } } } },
     '/check-out': { get: { tags: ['Check-Out'], summary: 'List check-outs', responses: { 200: { description: 'Success' } } } },
     '/housekeeping': { get: { tags: ['Housekeeping'], summary: 'List housekeeping tasks', responses: { 200: { description: 'Success' } } } },
+    '/invoices': { get: { tags: ['Invoices'], summary: 'List invoices', responses: { 200: { description: 'Success' } } } },
+    '/invoice-items': { get: { tags: ['Invoice Items'], summary: 'List invoice items', responses: { 200: { description: 'Success' } } } },
+    '/payments': { get: { tags: ['Payments'], summary: 'List payments', responses: { 200: { description: 'Success' } } } },
+    '/payment-allocations': { get: { tags: ['Payment Allocations'], summary: 'List payment allocations', responses: { 200: { description: 'Success' } } } },
+    '/refunds': { get: { tags: ['Refunds'], summary: 'List refunds', responses: { 200: { description: 'Success' } } } },
+    '/reports/revenue': { get: { tags: ['Reports'], summary: 'Get revenue summary', responses: { 200: { description: 'Success' } } } },
+    '/reports/outstanding-invoices': { get: { tags: ['Reports'], summary: 'Get outstanding invoices', responses: { 200: { description: 'Success' } } } },
+    '/reports/payment-history': { get: { tags: ['Reports'], summary: 'Get payment history', responses: { 200: { description: 'Success' } } } },
   },
   components: {
     securitySchemes: {

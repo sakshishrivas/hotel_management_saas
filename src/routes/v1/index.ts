@@ -11,6 +11,12 @@ import { bookingGuestRouter } from '../../modules/booking-guests/routes';
 import { checkinRouter } from '../../modules/check-in/routes';
 import { checkoutRouter } from '../../modules/check-out/routes';
 import { housekeepingRouter } from '../../modules/housekeeping/routes';
+import { invoiceRouter } from '../../modules/invoices/routes';
+import { invoiceItemRouter } from '../../modules/invoice-items/routes';
+import { paymentRouter } from '../../modules/payments/routes';
+import { paymentAllocationRouter } from '../../modules/payment-allocations/routes';
+import { refundRouter } from '../../modules/refunds/routes';
+import { reportRouter } from '../../modules/reports/routes';
 
 export const v1Router = Router();
 
@@ -25,3 +31,9 @@ v1Router.use('/booking-guests', bookingGuestRouter);
 v1Router.use('/check-ins', checkinRouter);
 v1Router.use('/check-outs', checkoutRouter);
 v1Router.use('/housekeeping', housekeepingRouter);
+v1Router.use('/invoices', invoiceRouter);
+v1Router.use('/invoice-items', invoiceItemRouter);
+v1Router.use('/payments', paymentRouter);
+v1Router.use('/payment-allocations', paymentAllocationRouter);
+v1Router.use('/refunds', refundRouter);
+v1Router.use('/reports', reportRouter);
