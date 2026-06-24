@@ -206,6 +206,12 @@ export const swaggerSpec = {
         },
       },
     },
+    '/customers': { get: { tags: ['Customers'], summary: 'List customers', responses: { 200: { description: 'Success' } } } },
+    '/bookings': { get: { tags: ['Bookings'], summary: 'List bookings', responses: { 200: { description: 'Success' } } } },
+    '/booking-guests': { get: { tags: ['Booking Guests'], summary: 'List booking guests', responses: { 200: { description: 'Success' } } } },
+    '/check-in': { get: { tags: ['Check-In'], summary: 'List check-ins', responses: { 200: { description: 'Success' } } } },
+    '/check-out': { get: { tags: ['Check-Out'], summary: 'List check-outs', responses: { 200: { description: 'Success' } } } },
+    '/housekeeping': { get: { tags: ['Housekeeping'], summary: 'List housekeeping tasks', responses: { 200: { description: 'Success' } } } },
   },
   components: {
     securitySchemes: {

@@ -5,6 +5,12 @@ import { authRouter } from '../../modules/auth/routes';
 import { hotelRouter } from '../../modules/hotels/routes';
 import { roomTypeRouter } from '../../modules/room-types/routes';
 import { roomRouter } from '../../modules/rooms/routes';
+import { customerRouter } from '../../modules/customers/routes';
+import { bookingRouter } from '../../modules/bookings/routes';
+import { bookingGuestRouter } from '../../modules/booking-guests/routes';
+import { checkinRouter } from '../../modules/check-in/routes';
+import { checkoutRouter } from '../../modules/check-out/routes';
+import { housekeepingRouter } from '../../modules/housekeeping/routes';
 
 export const v1Router = Router();
 
@@ -13,3 +19,9 @@ v1Router.use('/auth', authRouter);
 v1Router.use('/hotels', hotelRouter);
 v1Router.use('/room-types', roomTypeRouter);
 v1Router.use('/rooms', roomRouter);
+v1Router.use('/customers', customerRouter);
+v1Router.use('/bookings', bookingRouter);
+v1Router.use('/booking-guests', bookingGuestRouter);
+v1Router.use('/check-ins', checkinRouter);
+v1Router.use('/check-outs', checkoutRouter);
+v1Router.use('/housekeeping', housekeepingRouter);
