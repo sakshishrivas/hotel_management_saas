@@ -1,0 +1,864 @@
+
+enum BookingStatus {
+  draft
+  quoted
+  confirmed
+  cancelled
+  no_show
+  checked_in
+  checked_out
+  completed
+
+  @@map("booking_status")
+}
+
+enum RoomStatus {
+  available
+  reserved
+  occupied
+  dirty
+  cleaning
+  out_of_service
+  maintenance
+
+  @@map("room_status")
+}
+
+enum PaymentStatus {
+  pending
+  authorized
+  captured
+  failed
+  voided
+  partially_refunded
+  refunded
+
+  @@map("payment_status")
+}
+
+enum InvoiceStatus {
+  draft
+  issued
+  partially_paid
+  paid
+  void
+  overdue
+
+  @@map("invoice_status")
+}
+
+enum OrderStatus {
+  draft
+  placed
+  accepted
+  preparing
+  ready
+  delivered
+  cancelled
+  refunded
+
+  @@map("order_status")
+}
+
+enum HousekeepingStatus {
+  requested
+  assigned
+  in_progress
+  completed
+  cancelled
+
+  @@map("housekeeping_status")
+}
+
+enum HousekeepingPriority {
+  low
+  medium
+  high
+  urgent
+
+  @@map("housekeeping_priority")
+}
+
+enum NotificationChannel {
+  in_app
+  email
+  sms
+  push
+
+  @@map("notification_channel")
+}
+
+enum NotificationStatus {
+  queued
+  sent
+  delivered
+  read
+  failed
+
+  @@map("notification_status")
+}
+
+enum JobKind {
+  import
+  export
+
+  @@map("job_kind")
+}
+
+enum JobStatus {
+  queued
+  processing
+  completed
+  failed
+  cancelled
+
+  @@map("job_status")
+}
+
+enum PaymentMethod {
+  cash
+  card
+  upi
+  bank_transfer
+  wallet
+  gateway
+  other
+
+  @@map("payment_method")
+}
+
+model Hotel {
+  id                String    @id @default(uuid()) @db.Uuid
+  hotelCode         String    @unique(map: "ux_hotels_code_active") @map("hotel_code") @db.Text
+  name              String    @db.Text
+  legalName         String?   @map("legal_name") @db.Text
+  taxRegistrationNo String?   @map("tax_registration_no") @db.Text
+  currencyCode      String    @default("USD") @map("currency_code") @db.Char(3)
+  timezone          String    @default("UTC") @db.Text
+  phone             String?   @db.Text
+  email             String?   @db.Text
+  website           String?   @db.Text
+  addressLine1      String?   @map("address_line1") @db.Text
+  addressLine2      String?   @map("address_line2") @db.Text
+  city              String?   @db.Text
+  state             String?   @db.Text
+  postalCode        String?   @map("postal_code") @db.Text
+  countryCode       String    @default("US") @map("country_code") @db.Char(2)
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  staffProfiles       StaffProfile[]
+  customerProfiles    CustomerProfile[]
+  roomTypes           RoomType[]
+  rooms               Room[]
+  roomStatusHistories RoomStatusHistory[]
+  roomBlocks          RoomBlock[]
+  bookings            Booking[]
+  bookingRooms        BookingRoom[]
+  bookingGuests       BookingGuest[]
+  checkinRecords      CheckinRecord[]
+  checkoutRecords     CheckoutRecord[]
+  invoices            Invoice[]
+  invoiceItems        InvoiceItem[]
+  payments            Payment[]
+  paymentAllocations  PaymentAllocation[]
+  refunds             Refund[]
+  housekeepingTasks   HousekeepingTask[]
+  foodCategories      FoodCategory[]
+  menuItems           MenuItem[]
+  foodOrders          FoodOrder[]
+  foodOrderItems      FoodOrderItem[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  importExportJobs    ImportExportJob[]
+
+  @@map("hotels")
+}
+
+model StaffProfile {
+  id                    String    @id @default(uuid()) @db.Uuid
+  hotelId               String    @map("hotel_id") @db.Uuid
+  userId                String    @map("user_id") @db.Uuid
+  employeeNo            String    @unique(map: "ux_staff_profiles_employee_no_active") @map("employee_no") @db.Text
+  department            String?   @db.Text
+  designation           String?   @db.Text
+  employmentType        String?   @map("employment_type") @db.Text
+  hireDate              DateTime? @map("hire_date") @db.Date
+  terminationDate       DateTime? @map("termination_date") @db.Date
+  emergencyContactName  String?   @map("emergency_contact_name") @db.Text
+  emergencyContactPhone String?   @map("emergency_contact_phone") @db.Text
+  isActive              Boolean   @default(true) @map("is_active")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt             DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel Hotel   @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  user  AppUser @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, hotelId], map: "ux_staff_profiles_user_hotel_active")
+  @@index([hotelId], map: "ix_staff_profiles_hotel_id")
+  @@map("staff_profiles")
+}
+
+model CustomerProfile {
+  id           String    @id @default(uuid()) @db.Uuid
+  hotelId      String    @map("hotel_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  customerNo   String    @unique(map: "ux_customer_profiles_customer_no_active") @map("customer_no") @db.Text
+  firstName    String?   @map("first_name") @db.Text
+  lastName     String?   @map("last_name") @db.Text
+  dateOfBirth  DateTime? @map("date_of_birth") @db.Date
+  gender       String?   @db.Text
+  nationality  String?   @db.Text
+  documentType String?   @map("document_type") @db.Text
+  documentNo   String?   @map("document_no") @db.Text
+  addressLine1 String?   @map("address_line1") @db.Text
+  addressLine2 String?   @map("address_line2") @db.Text
+  city         String?   @db.Text
+  state        String?   @db.Text
+  postalCode   String?   @map("postal_code") @db.Text
+  countryCode  String?   @default("US") @map("country_code") @db.Char(2)
+  loyaltyPoints Int      @default(0) @map("loyalty_points")
+  notes        String?   @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel      Hotel       @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  user       AppUser     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  bookings   Booking[]
+  foodOrders FoodOrder[]
+
+  @@unique([userId, hotelId], map: "ux_customer_profiles_user_hotel_active")
+  @@index([hotelId], map: "ix_customer_profiles_hotel_id")
+  @@map("customer_profiles")
+}
+
+model RoomAmenity {
+  id          String    @id @default(uuid()) @db.Uuid
+  code        String    @unique(map: "ux_room_amenities_code_active") @db.Text
+  name        String    @db.Text
+  category    String?   @db.Text
+  description String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  roomTypeAmenities RoomTypeAmenity[]
+
+  @@map("room_amenities")
+}
+
+model RoomType {
+  id             String    @id @default(uuid()) @db.Uuid
+  hotelId        String    @map("hotel_id") @db.Uuid
+  code           String    @db.Text
+  name           String    @db.Text
+  description    String?   @db.Text
+  baseOccupancy  Int       @default(1) @map("base_occupancy")
+  maxOccupancy   Int       @default(2) @map("max_occupancy")
+  bedType        String?   @map("bed_type") @db.Text
+  roomSizeSqm    Decimal?  @map("room_size_sqm") @db.Decimal(8, 2)
+  baseRate       Decimal   @default(0) @map("base_rate") @db.Decimal(14, 2)
+  extraBedRate   Decimal   @default(0) @map("extra_bed_rate") @db.Decimal(14, 2)
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel             Hotel             @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  roomTypeRates     RoomTypeRate[]
+  roomTypeAmenities RoomTypeAmenity[]
+  rooms             Room[]
+  bookingRooms      BookingRoom[]
+
+  @@unique([hotelId, code], map: "ux_room_types_code_hotel_active")
+  @@index([hotelId], map: "ix_room_types_hotel_id")
+  @@map("room_types")
+}
+
+model RoomTypeRate {
+  id            String    @id @default(uuid()) @db.Uuid
+  roomTypeId    String    @map("room_type_id") @db.Uuid
+  rateName      String    @map("rate_name") @db.Text
+  validFrom     DateTime  @map("valid_from") @db.Date
+  validTo       DateTime? @map("valid_to") @db.Date
+  currencyCode  String    @default("USD") @map("currency_code") @db.Char(3)
+  rateAmount    Decimal   @map("rate_amount") @db.Decimal(14, 2)
+  minStayNights Int?      @map("min_stay_nights")
+  maxStayNights Int?      @map("max_stay_nights")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([roomTypeId, rateName, validFrom], map: "ux_room_type_rates_active")
+  @@index([roomTypeId], map: "ix_room_type_rates_room_type_id")
+  @@map("room_type_rates")
+}
+
+model RoomTypeAmenity {
+  id         String    @id @default(uuid()) @db.Uuid
+  roomTypeId String    @map("room_type_id") @db.Uuid
+  amenityId  String    @map("amenity_id") @db.Uuid
+  quantity   Int       @default(1)
+  notes      String?   @db.Text
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  roomType RoomType    @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  amenity  RoomAmenity @relation(fields: [amenityId], references: [id], onDelete: Restrict)
+
+  @@unique([roomTypeId, amenityId], map: "ux_room_type_amenities_active")
+  @@index([amenityId], map: "ix_room_type_amenities_amenity_id")
+  @@map("room_type_amenities")
+}
+
+model Room {
+  id               String     @id @default(uuid()) @db.Uuid
+  hotelId          String     @map("hotel_id") @db.Uuid
+  roomTypeId       String     @map("room_type_id") @db.Uuid
+  roomNumber       String     @map("room_number") @db.Text
+  floorNo          Int?       @map("floor_no")
+  wing             String?    @db.Text
+  status           RoomStatus @default(available)
+  isSmokingAllowed Boolean    @default(false) @map("is_smoking_allowed")
+  isAccessible     Boolean    @default(false) @map("is_accessible")
+  notes            String?    @db.Text
+  createdAt        DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime?  @map("deleted_at") @db.Timestamptz(6)
+
+  hotel               Hotel               @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  roomType            RoomType            @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  roomStatusHistories RoomStatusHistory[]
+  roomBlocks          RoomBlock[]
+  bookingRooms        BookingRoom[]
+  housekeepingTasks   HousekeepingTask[]
+
+  @@unique([hotelId, roomNumber], map: "ux_rooms_room_number_hotel_active")
+  @@index([hotelId], map: "ix_rooms_hotel_id")
+  @@index([roomTypeId], map: "ix_rooms_room_type_id")
+  @@index([status], map: "ix_rooms_status")
+  @@map("rooms")
+}
+
+model RoomStatusHistory {
+  id              String      @id @default(uuid()) @db.Uuid
+  hotelId         String      @map("hotel_id") @db.Uuid
+  roomId          String      @map("room_id") @db.Uuid
+  oldStatus       RoomStatus? @map("old_status")
+  newStatus       RoomStatus  @map("new_status")
+  changedByUserId String?     @map("changed_by_user_id") @db.Uuid
+  reason          String?     @db.Text
+  changedAt       DateTime    @default(now()) @map("changed_at") @db.Timestamptz(6)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?   @map("deleted_at") @db.Timestamptz(6)
+
+  hotel         Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  room          Room     @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  changedByUser AppUser? @relation("RoomStatusChangedBy", fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([roomId, changedAt(sort: Desc)], map: "ix_room_status_history_room_id")
+  @@map("room_status_history")
+}
+
+model RoomBlock {
+  id              String    @id @default(uuid()) @db.Uuid
+  hotelId         String    @map("hotel_id") @db.Uuid
+  roomId          String    @map("room_id") @db.Uuid
+  blockType       String    @map("block_type") @db.Text
+  startDate       DateTime  @map("start_date") @db.Date
+  endDate         DateTime  @map("end_date") @db.Date
+  reason          String?   @db.Text
+  createdByUserId String?   @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel         Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  room          Room     @relation(fields: [roomId], references: [id], onDelete: Restrict)
+  createdByUser AppUser? @relation("RoomBlockCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([roomId, startDate, endDate], map: "ix_room_blocks_room_id")
+  @@map("room_blocks")
+}
+
+model Booking {
+  id                  String        @id @default(uuid()) @db.Uuid
+  hotelId             String        @map("hotel_id") @db.Uuid
+  bookingRef          String        @unique(map: "ux_bookings_booking_ref_active") @map("booking_ref") @db.Text
+  customerProfileId   String?       @map("customer_profile_id") @db.Uuid
+  bookedByUserId      String?       @map("booked_by_user_id") @db.Uuid
+  sourceChannel       String        @default("front_desk") @map("source_channel") @db.Text
+  status              BookingStatus @default(draft)
+  bookedAt            DateTime      @default(now()) @map("booked_at") @db.Timestamptz(6)
+  confirmedAt         DateTime?     @map("confirmed_at") @db.Timestamptz(6)
+  cancelledAt         DateTime?     @map("cancelled_at") @db.Timestamptz(6)
+  cancelledByUserId   String?       @map("cancelled_by_user_id") @db.Uuid
+  cancellationReason  String?       @map("cancellation_reason") @db.Text
+  checkInDate         DateTime      @map("check_in_date") @db.Date
+  checkOutDate        DateTime      @map("check_out_date") @db.Date
+  adults              Int           @default(1)
+  children            Int           @default(0)
+  currencyCode        String        @default("USD") @map("currency_code") @db.Char(3)
+  subtotalAmount      Decimal       @default(0) @map("subtotal_amount") @db.Decimal(14, 2)
+  taxAmount           Decimal       @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  discountAmount      Decimal       @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  totalAmount         Decimal       @default(0) @map("total_amount") @db.Decimal(14, 2)
+  amountPaid          Decimal       @default(0) @map("amount_paid") @db.Decimal(14, 2)
+  balanceDue          Decimal       @default(0) @map("balance_due") @db.Decimal(14, 2)
+  specialRequests     String?       @map("special_requests") @db.Text
+  notes               String?       @db.Text
+  metadata            Json          @default("{}")
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  hotel           Hotel            @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  customerProfile CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+  bookedByUser    AppUser?         @relation("BookingBookedBy", fields: [bookedByUserId], references: [id], onDelete: SetNull)
+  cancelledByUser AppUser?         @relation("BookingCancelledBy", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+
+  bookingRooms    BookingRoom[]
+  checkinRecords  CheckinRecord[]
+  checkoutRecords CheckoutRecord[]
+  invoices        Invoice[]
+  payments        Payment[]
+  foodOrders      FoodOrder[]
+
+  @@index([hotelId, bookedAt(sort: Desc)], map: "ix_bookings_hotel_id")
+  @@index([customerProfileId], map: "ix_bookings_customer_profile_id")
+  @@index([status], map: "ix_bookings_status")
+  @@map("bookings")
+}
+
+model BookingRoom {
+  id             String        @id @default(uuid()) @db.Uuid
+  hotelId        String        @map("hotel_id") @db.Uuid
+  bookingId      String        @map("booking_id") @db.Uuid
+  roomTypeId     String        @map("room_type_id") @db.Uuid
+  roomId         String?       @map("room_id") @db.Uuid
+  status         BookingStatus @default(confirmed)
+  checkInDate    DateTime      @map("check_in_date") @db.Date
+  checkOutDate   DateTime      @map("check_out_date") @db.Date
+  adults         Int           @default(1)
+  children       Int           @default(0)
+  currencyCode   String        @default("USD") @map("currency_code") @db.Char(3)
+  nightlyRate    Decimal       @default(0) @map("nightly_rate") @db.Decimal(14, 2)
+  taxAmount      Decimal       @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  discountAmount Decimal       @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  lineTotal      Decimal       @default(0) @map("line_total") @db.Decimal(14, 2)
+  notes          String?       @db.Text
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  hotel         Hotel          @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  booking       Booking        @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  roomType      RoomType       @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  room          Room?          @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  bookingGuests BookingGuest[]
+  foodOrders    FoodOrder[]
+
+  @@index([bookingId], map: "ix_booking_rooms_booking_id")
+  @@index([roomId], map: "ix_booking_rooms_room_id")
+  @@index([roomTypeId], map: "ix_booking_rooms_room_type_id")
+  @@map("booking_rooms")
+}
+
+model BookingGuest {
+  id            String    @id @default(uuid()) @db.Uuid
+  hotelId       String    @map("hotel_id") @db.Uuid
+  bookingRoomId String    @map("booking_room_id") @db.Uuid
+  guestType     String    @default("guest") @map("guest_type") @db.Text
+  fullName      String    @map("full_name") @db.Text
+  email         String?   @db.Text
+  phone         String?   @db.Text
+  documentType  String?   @map("document_type") @db.Text
+  documentNo    String?   @map("document_no") @db.Text
+  isPrimary     Boolean   @default(false) @map("is_primary")
+  dateOfBirth   DateTime? @map("date_of_birth") @db.Date
+  nationality   String?   @db.Text
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel       Hotel       @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  bookingRoom BookingRoom @relation(fields: [bookingRoomId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId], map: "ix_booking_guests_hotel_id")
+  @@index([bookingRoomId, isPrimary], map: "ix_booking_guests_booking_room_primary")
+  @@index([bookingRoomId], map: "ix_booking_guests_booking_room_id")
+  @@map("booking_guests")
+}
+
+model CheckinRecord {
+  id                 String    @id @default(uuid()) @db.Uuid
+  hotelId            String    @map("hotel_id") @db.Uuid
+  bookingId          String    @unique(map: "ux_checkin_records_booking_active") @map("booking_id") @db.Uuid
+  checkedInAt        DateTime  @default(now()) @map("checked_in_at") @db.Timestamptz(6)
+  checkedInByUserId  String?   @map("checked_in_by_user_id") @db.Uuid
+  depositAmount      Decimal   @default(0) @map("deposit_amount") @db.Decimal(14, 2)
+  remarks            String?   @db.Text
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel         Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  checkedInByUser AppUser? @relation("CheckinBy", fields: [checkedInByUserId], references: [id], onDelete: SetNull)
+
+  @@map("checkin_records")
+}
+
+model CheckoutRecord {
+  id                   String    @id @default(uuid()) @db.Uuid
+  hotelId              String    @map("hotel_id") @db.Uuid
+  bookingId            String    @unique(map: "ux_checkout_records_booking_active") @map("booking_id") @db.Uuid
+  checkedOutAt         DateTime  @default(now()) @map("checked_out_at") @db.Timestamptz(6)
+  checkedOutByUserId   String?   @map("checked_out_by_user_id") @db.Uuid
+  finalInspectionStatus String?   @map("final_inspection_status") @db.Text
+  remarks              String?   @db.Text
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel          Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  booking        Booking  @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  checkedOutByUser AppUser? @relation("CheckoutBy", fields: [checkedOutByUserId], references: [id], onDelete: SetNull)
+
+  @@map("checkout_records")
+}
+
+model Invoice {
+  id                  String        @id @default(uuid()) @db.Uuid
+  hotelId             String        @map("hotel_id") @db.Uuid
+  bookingId           String        @unique(map: "ux_invoices_booking_active") @map("booking_id") @db.Uuid
+  invoiceNumber       String        @unique(map: "ux_invoices_invoice_number_active") @map("invoice_number") @db.Text
+  invoiceDate         DateTime      @default(now()) @map("invoice_date") @db.Date
+  dueDate             DateTime?     @map("due_date") @db.Date
+  status              InvoiceStatus @default(draft)
+  currencyCode        String        @default("USD") @map("currency_code") @db.Char(3)
+  subtotalAmount      Decimal       @default(0) @map("subtotal_amount") @db.Decimal(14, 2)
+  taxAmount           Decimal       @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  serviceChargeAmount Decimal       @default(0) @map("service_charge_amount") @db.Decimal(14, 2)
+  discountAmount      Decimal       @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  totalAmount         Decimal       @default(0) @map("total_amount") @db.Decimal(14, 2)
+  balanceDue          Decimal       @default(0) @map("balance_due") @db.Decimal(14, 2)
+  issuedByUserId      String?       @map("issued_by_user_id") @db.Uuid
+  notes               String?       @db.Text
+  metadata            Json          @default("{}")
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  hotel              Hotel               @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  booking            Booking             @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  issuedByUser       AppUser?            @relation("InvoiceIssuedBy", fields: [issuedByUserId], references: [id], onDelete: SetNull)
+  invoiceItems       InvoiceItem[]
+  payments           Payment[]
+  paymentAllocations PaymentAllocation[]
+
+  @@index([hotelId, invoiceDate(sort: Desc)], map: "ix_invoices_hotel_id")
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id             String    @id @default(uuid()) @db.Uuid
+  hotelId        String    @map("hotel_id") @db.Uuid
+  invoiceId      String    @map("invoice_id") @db.Uuid
+  lineNo         Int       @map("line_no")
+  itemType       String    @map("item_type") @db.Text
+  sourceTable    String?   @map("source_table") @db.Text
+  sourceId       String?   @map("source_id") @db.Uuid
+  description    String    @db.Text
+  quantity       Decimal   @default(1) @db.Decimal(14, 2)
+  unitPrice      Decimal   @default(0) @map("unit_price") @db.Decimal(14, 2)
+  taxAmount      Decimal   @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  discountAmount Decimal   @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  lineTotal      Decimal   @default(0) @map("line_total") @db.Decimal(14, 2)
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel   Hotel   @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@unique([invoiceId, lineNo], map: "ux_invoice_items_line_active")
+  @@index([invoiceId], map: "ix_invoice_items_invoice_id")
+  @@map("invoice_items")
+}
+
+model Payment {
+  id                   String        @id @default(uuid()) @db.Uuid
+  hotelId              String        @map("hotel_id") @db.Uuid
+  bookingId            String        @map("booking_id") @db.Uuid
+  invoiceId            String?       @map("invoice_id") @db.Uuid
+  paymentRef           String        @unique(map: "ux_payments_payment_ref_active") @map("payment_ref") @db.Text
+  paymentMethod        PaymentMethod @map("payment_method")
+  status               PaymentStatus @default(pending)
+  amount               Decimal       @db.Decimal(14, 2)
+  currencyCode         String        @default("USD") @map("currency_code") @db.Char(3)
+  paidAt               DateTime?     @map("paid_at") @db.Timestamptz(6)
+  gatewayTransactionId String?       @map("gateway_transaction_id") @db.Text
+  receivedByUserId     String?       @map("received_by_user_id") @db.Uuid
+  payerUserId          String?       @map("payer_user_id") @db.Uuid
+  notes                String?       @db.Text
+  metadata             Json          @default("{}")
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  hotel              Hotel               @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  booking            Booking             @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+  invoice            Invoice?            @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  receivedByUser     AppUser?            @relation("PaymentReceivedBy", fields: [receivedByUserId], references: [id], onDelete: SetNull)
+  payerUser          AppUser?            @relation("PaymentPayer", fields: [payerUserId], references: [id], onDelete: SetNull)
+  paymentAllocations PaymentAllocation[]
+  refunds            Refund[]
+
+  @@index([bookingId], map: "ix_payments_booking_id")
+  @@index([invoiceId], map: "ix_payments_invoice_id")
+  @@index([status], map: "ix_payments_status")
+  @@map("payments")
+}
+
+model PaymentAllocation {
+  id        String    @id @default(uuid()) @db.Uuid
+  hotelId   String    @map("hotel_id") @db.Uuid
+  paymentId String    @map("payment_id") @db.Uuid
+  invoiceId String    @map("invoice_id") @db.Uuid
+  amount    Decimal   @db.Decimal(14, 2)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel   Hotel   @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+
+  @@unique([paymentId, invoiceId], map: "ux_payment_allocations_active")
+  @@index([paymentId], map: "ix_payment_allocations_payment_id")
+  @@map("payment_allocations")
+}
+
+model Refund {
+  id                String        @id @default(uuid()) @db.Uuid
+  hotelId           String        @map("hotel_id") @db.Uuid
+  paymentId         String        @map("payment_id") @db.Uuid
+  refundRef         String        @unique(map: "ux_refunds_refund_ref_active") @map("refund_ref") @db.Text
+  amount            Decimal       @db.Decimal(14, 2)
+  reason            String?       @db.Text
+  status            PaymentStatus @default(pending)
+  refundedAt        DateTime?     @map("refunded_at") @db.Timestamptz(6)
+  processedByUserId String?       @map("processed_by_user_id") @db.Uuid
+  metadata          Json          @default("{}")
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?     @map("deleted_at") @db.Timestamptz(6)
+
+  hotel           Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  payment         Payment  @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  processedByUser AppUser? @relation("RefundProcessedBy", fields: [processedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([paymentId], map: "ix_refunds_payment_id")
+  @@map("refunds")
+}
+
+model HousekeepingTask {
+  id               String               @id @default(uuid()) @db.Uuid
+  hotelId          String               @map("hotel_id") @db.Uuid
+  roomId           String?              @map("room_id") @db.Uuid
+  taskType         String               @map("task_type") @db.Text
+  priority         HousekeepingPriority @default(medium)
+  status           HousekeepingStatus   @default(requested)
+  requestedByUserId String?             @map("requested_by_user_id") @db.Uuid
+  assignedToUserId String?              @map("assigned_to_user_id") @db.Uuid
+  scheduledStartAt DateTime?            @map("scheduled_start_at") @db.Timestamptz(6)
+  scheduledEndAt   DateTime?            @map("scheduled_end_at") @db.Timestamptz(6)
+  startedAt        DateTime?            @map("started_at") @db.Timestamptz(6)
+  completedAt      DateTime?            @map("completed_at") @db.Timestamptz(6)
+  notes            String?              @db.Text
+  metadata         Json                 @default("{}")
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime?            @map("deleted_at") @db.Timestamptz(6)
+
+  hotel           Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  room            Room?    @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  requestedByUser AppUser? @relation("HousekeepingRequestedBy", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  assignedToUser  AppUser? @relation("HousekeepingAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  @@index([roomId], map: "ix_housekeeping_tasks_room_id")
+  @@index([status], map: "ix_housekeeping_tasks_status")
+  @@map("housekeeping_tasks")
+}
+
+model FoodCategory {
+  id          String    @id @default(uuid()) @db.Uuid
+  hotelId     String    @map("hotel_id") @db.Uuid
+  code        String    @db.Text
+  name        String    @db.Text
+  description String?   @db.Text
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel     Hotel      @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  menuItems MenuItem[]
+
+  @@unique([hotelId, code], map: "ux_food_categories_code_hotel_active")
+  @@map("food_categories")
+}
+
+model MenuItem {
+  id             String    @id @default(uuid()) @db.Uuid
+  hotelId        String    @map("hotel_id") @db.Uuid
+  categoryId     String?   @map("category_id") @db.Uuid
+  code           String    @db.Text
+  name           String    @db.Text
+  description    String?   @db.Text
+  price          Decimal   @db.Decimal(14, 2)
+  taxRate        Decimal   @default(0) @map("tax_rate") @db.Decimal(6, 3)
+  prepTimeMinutes Int?     @map("prep_time_minutes")
+  isAvailable    Boolean   @default(true) @map("is_available")
+  isVeg          Boolean?  @map("is_veg")
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel          Hotel          @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  category       FoodCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  foodOrderItems FoodOrderItem[]
+
+  @@unique([hotelId, code], map: "ux_menu_items_code_hotel_active")
+  @@index([categoryId], map: "ix_menu_items_category_id")
+  @@map("menu_items")
+}
+
+model FoodOrder {
+  id                  String      @id @default(uuid()) @db.Uuid
+  hotelId             String      @map("hotel_id") @db.Uuid
+  bookingId           String?     @map("booking_id") @db.Uuid
+  bookingRoomId       String?     @map("booking_room_id") @db.Uuid
+  customerProfileId   String?     @map("customer_profile_id") @db.Uuid
+  placedByUserId      String?     @map("placed_by_user_id") @db.Uuid
+  orderNumber         String      @unique(map: "ux_food_orders_order_number_active") @map("order_number") @db.Text
+  status              OrderStatus @default(draft)
+  orderedAt           DateTime    @default(now()) @map("ordered_at") @db.Timestamptz(6)
+  requestedDeliveryAt DateTime?   @map("requested_delivery_at") @db.Timestamptz(6)
+  deliveryInstructions String?    @map("delivery_instructions") @db.Text
+  currencyCode        String      @default("USD") @map("currency_code") @db.Char(3)
+  subtotalAmount      Decimal     @default(0) @map("subtotal_amount") @db.Decimal(14, 2)
+  taxAmount           Decimal     @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  serviceChargeAmount Decimal     @default(0) @map("service_charge_amount") @db.Decimal(14, 2)
+  discountAmount      Decimal     @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  totalAmount         Decimal     @default(0) @map("total_amount") @db.Decimal(14, 2)
+  notes               String?     @db.Text
+  metadata            Json        @default("{}")
+  createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?   @map("deleted_at") @db.Timestamptz(6)
+
+  hotel           Hotel            @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  booking         Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  bookingRoom     BookingRoom?     @relation(fields: [bookingRoomId], references: [id], onDelete: SetNull)
+  customerProfile CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+  placedByUser    AppUser?         @relation("FoodOrderPlacedBy", fields: [placedByUserId], references: [id], onDelete: SetNull)
+  foodOrderItems  FoodOrderItem[]
+
+  @@index([hotelId, orderedAt(sort: Desc)], map: "ix_food_orders_hotel_id")
+  @@index([bookingRoomId], map: "ix_food_orders_booking_room_id")
+  @@map("food_orders")
+}
+
+model FoodOrderItem {
+  id                  String    @id @default(uuid()) @db.Uuid
+  hotelId             String    @map("hotel_id") @db.Uuid
+  foodOrderId         String    @map("food_order_id") @db.Uuid
+  menuItemId          String    @map("menu_item_id") @db.Uuid
+  lineNo              Int       @map("line_no")
+  quantity            Decimal   @default(1) @db.Decimal(14, 2)
+  unitPrice           Decimal   @default(0) @map("unit_price") @db.Decimal(14, 2)
+  taxAmount           Decimal   @default(0) @map("tax_amount") @db.Decimal(14, 2)
+  discountAmount      Decimal   @default(0) @map("discount_amount") @db.Decimal(14, 2)
+  lineTotal           Decimal   @default(0) @map("line_total") @db.Decimal(14, 2)
+  specialInstructions String?   @map("special_instructions") @db.Text
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel     Hotel     @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  foodOrder FoodOrder @relation(fields: [foodOrderId], references: [id], onDelete: Cascade)
+  menuItem  MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Restrict)
+
+  @@unique([foodOrderId, lineNo], map: "ux_food_order_items_line_active")
+  @@index([foodOrderId], map: "ix_food_order_items_food_order_id")
+  @@map("food_order_items")
+}
+
+model Notification {
+  id                String              @id @default(uuid()) @db.Uuid
+  hotelId           String              @map("hotel_id") @db.Uuid
+  recipientUserId   String              @map("recipient_user_id") @db.Uuid
+  notificationType  String              @map("notification_type") @db.Text
+  channel           NotificationChannel @default(in_app)
+  status            NotificationStatus  @default(queued)
+  title             String              @db.Text
+  body              String              @db.Text
+  payload           Json                @default("{}")
+  relatedEntityType String?             @map("related_entity_type") @db.Text
+  relatedEntityId   String?             @map("related_entity_id") @db.Uuid
+  scheduledAt       DateTime?           @map("scheduled_at") @db.Timestamptz(6)
+  sentAt            DateTime?           @map("sent_at") @db.Timestamptz(6)
+  readAt            DateTime?           @map("read_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?           @map("deleted_at") @db.Timestamptz(6)
+
+  hotel         Hotel   @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  recipientUser AppUser @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Restrict)
+
+  @@index([recipientUserId, status, createdAt(sort: Desc)], map: "ix_notifications_recipient_status")
+  @@index([hotelId, createdAt(sort: Desc)], map: "ix_notifications_hotel_id")
+  @@map("notifications")
+}
+
+model ImportExportJob {
+  id               String    @id @default(uuid()) @db.Uuid
+  hotelId          String    @map("hotel_id") @db.Uuid
+  initiatedByUserId String?  @map("initiated_by_user_id") @db.Uuid
+  jobKind          JobKind   @map("job_kind")
+  entityName       String    @map("entity_name") @db.Text
+  fileName         String?   @map("file_name") @db.Text
+  filePath         String?   @map("file_path") @db.Text
+  fileFormat       String    @default("xlsx") @map("file_format") @db.Text
+  status           JobStatus @default(queued)
+  totalRows        Int       @default(0) @map("total_rows")
+  processedRows    Int       @default(0) @map("processed_rows")
+  failedRows       Int       @default(0) @map("failed_rows")
+  errorReportPath  String?   @map("error_report_path") @db.Text
+  startedAt        DateTime? @map("started_at") @db.Timestamptz(6)
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz(6)
+  metadata         Json      @default("{}")
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  hotel           Hotel    @relation(fields: [hotelId], references: [id], onDelete: Restrict)
+  initiatedByUser AppUser? @relation("JobInitiator", fields: [initiatedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([hotelId, status, createdAt(sort: Desc)], map: "ix_import_export_jobs_hotel_status")
+  @@map("import_export_jobs")
+}
