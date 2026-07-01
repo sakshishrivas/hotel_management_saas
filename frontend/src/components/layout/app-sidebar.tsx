@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   CalendarDays,
   Sparkles,
+  BarChart,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -35,6 +36,7 @@ const mainNavItems = [
   { title: 'Dashboard', icon: LayoutDashboard, href: '/' },
   { title: 'Bookings', icon: CalendarDays, href: '/bookings' },
   { title: 'Customers', icon: Users, href: '/customers' },
+  { title: 'Reports', icon: BarChart, href: '/reports' },
 ];
 
 const operationsNavItems = [
